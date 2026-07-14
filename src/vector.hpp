@@ -430,15 +430,27 @@ public:
 			size_ += 1;
 		} else {
 			// No reallocation needed
-			// Shift elements to the right
-			if (size_ > ind) {
+			// Use a temporary copy of value to avoid issues if value is in the vector
+			T tmp_value = value;
+			
+			// Shift elements to the right using placement new and explicit destroy
+			if (size_ > 0) {
+				// Construct copy of last element at position size_
 				new (data_ + size_) T(data_[size_ - 1]);
+				
+				// Shift elements right one by one
 				for (size_t i = size_; i > ind; --i) {
-					data_[i] = data_[i - 1];
+					// Destroy element at i first
+					data_[i].~T();
+					// Then placement new to copy from i-1
+					new (data_ + i) T(data_[i - 1]);
 				}
+				// Destroy element at ind to make room
 				data_[ind].~T();
 			}
-			new (data_ + ind) T(value);
+			
+			// Place the new element
+			new (data_ + ind) T(tmp_value);
 			size_ += 1;
 		}
 
