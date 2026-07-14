@@ -433,19 +433,17 @@ public:
 			// Use a temporary copy of value to avoid issues if value is in the vector
 			T tmp_value = value;
 			
-			// Shift elements to the right using placement new and explicit destroy
-			if (size_ > 0) {
-				// Construct copy of last element at position size_
-				new (data_ + size_) T(data_[size_ - 1]);
-				
-				// Shift elements right one by one
+			// Shift elements to the right by destroying and recreating them
+			// Only if there are elements to shift (ind < size_)
+			if (ind < size_) {
+				// Go from end to ind+1, shifting each element one position right
 				for (size_t i = size_; i > ind; --i) {
-					// Destroy element at i first
+					// Destroy element at position i
 					data_[i].~T();
-					// Then placement new to copy from i-1
+					// Placement new to copy from i-1
 					new (data_ + i) T(data_[i - 1]);
 				}
-				// Destroy element at ind to make room
+				// Destroy element at ind
 				data_[ind].~T();
 			}
 			
