@@ -430,25 +430,20 @@ public:
 			size_ += 1;
 		} else {
 			// No reallocation needed
-			// Use a temporary copy of value to avoid issues if value is in the vector
-			T tmp_value = value;
-			
-			// Shift elements to the right by destroying and recreating them
-			// Only if there are elements to shift (ind < size_)
+			// Only shift elements if ind < size_ (inserting in middle or at position less than size)
+			// If ind == size_, just add at end
 			if (ind < size_) {
-				// Go from end to ind+1, shifting each element one position right
+				// Shift elements to the right using simple assignment
+				// Move from right to left to avoid overwriting elements we haven't moved yet
 				for (size_t i = size_; i > ind; --i) {
-					// Destroy element at position i
-					data_[i].~T();
-					// Placement new to copy from i-1
-					new (data_ + i) T(data_[i - 1]);
+					data_[i] = data_[i - 1];
 				}
-				// Destroy element at ind
+				// Destroy the old element at ind
 				data_[ind].~T();
 			}
 			
-			// Place the new element
-			new (data_ + ind) T(tmp_value);
+			// Place the new element using placement new
+			new (data_ + ind) T(value);
 			size_ += 1;
 		}
 
